@@ -1,24 +1,33 @@
 import React, { Suspense } from "react";
 import { Switch, Route } from "react-router-dom";
+import NavbarComponent from "./components/navbar/NavbarComponent";
+import ProductPage from "../../screens/products/ProductPage";
+import ProductDetail from "../../screens/products/details/ProductDetail";
 
-const Home = React.lazy(() => import("../../screens/home/Home"));
 const NotFoundScreenProps = React.lazy(
   () => import("../../screens/not-found/NotFoundScreen")
 );
 
-export const AppRoutes = () => {
+export const AppRoutes: React.FC<{}> = () => {
   return (
-    <Suspense fallback={<div />}>
-      <Switch>
-        <Route exact={true} path="/app" component={() => <Home />}></Route>
-        <Route
-          exact={true}
-          path="/products"
-          component={() => <h1>Produtos</h1>}
-        ></Route>
-        <Route component={() => <NotFoundScreenProps />}></Route>
-      </Switch>
-    </Suspense>
+    <div>
+      <NavbarComponent />
+      <Suspense fallback={<div />}>
+        <Switch>
+          <Route
+            exact={true}
+            path="/products"
+            component={() => <ProductPage />}
+          ></Route>
+          <Route
+            exact={true}
+            path="/products/:id"
+            component={() => <ProductDetail />}
+          ></Route>
+          <Route component={() => <NotFoundScreenProps />}></Route>
+        </Switch>
+      </Suspense>
+    </div>
   );
 };
 

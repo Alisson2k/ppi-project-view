@@ -1,0 +1,23 @@
+.img-resize {
+    width: 100px !important;
+    min-height: 100px;
+    margin: auto;
+}
+
+.desc-overflow {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.subtitle {
+    font-size: 1.3rem !important;
+}
+
+.older {
+    font-size: 1rem !important;
+    text-decoration: line-through;
+    color: rgba(0, 0, 0, 0.5);
+}

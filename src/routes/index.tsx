@@ -2,9 +2,7 @@ import React, { Suspense } from "react";
 import { BrowserRouter, Switch, Route } from "react-router-dom";
 import AppRoutes from "./app/AppRoutes";
 
-const LoginPage = React.lazy(
-  () => import("../screens/login/LoginPage")
-);
+const LoginPage = React.lazy(() => import("../screens/login/LoginPage"));
 
 export default () => (
   <BrowserRouter>

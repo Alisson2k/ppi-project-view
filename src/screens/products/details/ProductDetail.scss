@@ -1,0 +1,25 @@
+.product-row {
+    margin: auto !important;
+    width: 40rem !important;
+}
+
+.p-image {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.add-cart {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: flex-end;
+    
+    button {
+        margin-left: 0.3em;
+    }
+}
+
+.promo-price {
+    text-decoration: line-through;
+}
