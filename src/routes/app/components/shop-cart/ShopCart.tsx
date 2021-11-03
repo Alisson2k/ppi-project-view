@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Accordion,
   Button,
@@ -11,6 +11,9 @@ import {
 } from "react-bootstrap";
 import { PRODUCTS } from "../../../../constants/products";
 import { AiOutlineMinus } from "react-icons/ai";
+import { UserContext } from "../../../../contexts/UserContext";
+import { ProductsContext } from "../../../../contexts/ProductsContext";
+import { postOrder } from "../../../../services/order/order";
 
 import "./ShopCart.scss";
 
@@ -20,18 +23,18 @@ interface ShopCartProps {
 }
 
 export const ShopCart: React.FC<ShopCartProps> = (props) => {
-  const [products, setProducts] = useState<Product[]>([]);
   const [address, setAddress] = useState<Address>({});
   const [payment, setPayment] = useState<Payment>({});
   const [buyed, setBuyed] = useState<boolean>(false);
-  const [disabled, setDisabled] = useState<boolean>(true);
+  const [orderId, setOrderId] = useState<number>(1);
+  const [disabledAddress, setDisabledAddress] = useState<boolean>(true);
+  const [disabledPayment, setDisabledPayment] = useState<boolean>(true);
+
+  const userContext = useContext(UserContext);
+  const products = useContext(ProductsContext);
 
   useEffect(() => {
-    setProducts(PRODUCTS.filter((p) => p.id % 3 == 0));
-  }, [setProducts]);
-
-  useEffect(() => {
-    setDisabled(
+    setDisabledAddress(
       !(
         address.state !== undefined &&
         address.state !== "" &&
@@ -42,7 +45,12 @@ export const ShopCart: React.FC<ShopCartProps> = (props) => {
         address.number !== undefined &&
         address.number !== "" &&
         address.additional !== undefined &&
-        address.additional !== "" &&
+        address.additional !== ""
+      )
+    );
+
+    setDisabledPayment(
+      !(
         payment.number !== undefined &&
         payment.number !== "" &&
         payment.cvv !== undefined &&
@@ -60,17 +68,69 @@ export const ShopCart: React.FC<ShopCartProps> = (props) => {
     props.onClose();
   };
 
+  const changeAddress = (index: any) => {
+    if (index == undefined || index == -1) {
+      setAddress({
+        state: "",
+        city: "",
+        street: "",
+        number: "",
+        additional: "",
+      });
+    } else if (!!userContext.address) {
+      setAddress(userContext.address[index]);
+    }
+  };
+
+  const changePayment = (index: any) => {
+    if (index == undefined || index == -1) {
+      setPayment({
+        number: "",
+        cvv: "",
+        date: "",
+        name: "",
+      });
+    } else if (!!userContext.payment) {
+      setPayment(userContext.payment[index]);
+    }
+  };
+
+  const removeItem = (index: number) => {
+    products.setProducts(products.products.filter((_, i) => i != index));
+  };
+
+  const submitOrder = () => {
+    postOrder({
+      payment,
+      address,
+      user: userContext,
+      product: products.products,
+    })
+      .then((res: any) => {
+        setOrderId(res.data);
+        products.setProducts([]);
+
+        setAddress({});
+        setPayment({});
+        setBuyed(true);
+      })
+      .catch((err: any) => console.error(err));
+  };
+
   return (
     <Offcanvas show={props.show} onHide={props.onClose}>
       <Offcanvas.Header closeButton>
         <Offcanvas.Title>Carrinho</Offcanvas.Title>
       </Offcanvas.Header>
       <Offcanvas.Body>
-        {products.map((product, idx) => (
+        {products.products.map((product, idx) => (
           <ListGroup horizontal={"sm"} className="my-2" key={idx}>
             <ListGroup.Item>{product.name}</ListGroup.Item>
             <ListGroup.Item style={{ paddingTop: "18px" }}>
-              <AiOutlineMinus className="minus-icon" />
+              <AiOutlineMinus
+                onClick={() => removeItem(idx)}
+                className="minus-icon"
+              />
             </ListGroup.Item>
           </ListGroup>
         ))}
@@ -78,6 +138,24 @@ export const ShopCart: React.FC<ShopCartProps> = (props) => {
           <Accordion.Item eventKey="0">
             <Accordion.Header>Endereço</Accordion.Header>
             <Accordion.Body>
+              <Form.Select
+                className="selector"
+                aria-label="Selecione um endereço"
+                onChange={(e) => changeAddress(e.currentTarget.value)}
+              >
+                <option key="-1" value="-1">
+                  Selecione um endereço
+                </option>
+                {userContext.address
+                  ? userContext.address.map((address, idx) => {
+                      return (
+                        <option key={idx} value={idx}>
+                          {address.street}
+                        </option>
+                      );
+                    })
+                  : undefined}
+              </Form.Select>
               <InputGroup>
                 <InputGroup.Text>Estado</InputGroup.Text>
                 <FormControl
@@ -135,6 +213,25 @@ export const ShopCart: React.FC<ShopCartProps> = (props) => {
           <Accordion.Item eventKey="1">
             <Accordion.Header>Pagamento</Accordion.Header>
             <Accordion.Body>
+              <Form.Select
+                className="selector"
+                aria-label="Selecione um pagamento"
+                onChange={(e) => changePayment(e.currentTarget.value)}
+              >
+                <option key="-1" value="-1">
+                  Selecione um pagamento
+                </option>
+                {userContext.payment
+                  ? userContext.payment.map((payment, idx) => {
+                      return (
+                        <option key={idx} value={idx}>
+                          Final{" "}
+                          {payment.number?.substring(payment.number.length - 4)}
+                        </option>
+                      );
+                    })
+                  : undefined}
+              </Form.Select>
               <Form>
                 <Form.Group className="mb-3">
                   <Form.Control
@@ -176,11 +273,9 @@ export const ShopCart: React.FC<ShopCartProps> = (props) => {
         </Accordion>
         <div className="button-buy">
           <Button
-            disabled={disabled}
+            disabled={disabledAddress || disabledPayment}
             onClick={() => {
-              setAddress({});
-              setPayment({});
-              setBuyed(true);
+              submitOrder();
             }}
             className="mt-2"
             variant="success"
@@ -193,9 +288,8 @@ export const ShopCart: React.FC<ShopCartProps> = (props) => {
             <Modal.Title>Compra realizada!</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            Seu número do pedido é #
-            {Math.floor(Math.random() * (999999 - 100000)) + 100000}, mais
-            informações foram enviadas para o seu e-mail!
+            Seu número do pedido é #{orderId}, mais informações foram enviadas
+            para o seu e-mail!
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={closeModal}>

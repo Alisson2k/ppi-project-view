@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router";
 import {
   Accordion,
@@ -9,17 +9,30 @@ import {
   Image,
   Row,
 } from "react-bootstrap";
-import { PRODUCTS } from "../../../constants/products";
+import { useHistory } from "react-router-dom";
+import { getProductsById } from "../../../services/products/products";
+import { ProductsContext } from "../../../contexts/ProductsContext";
 
 import "./ProductDetail.scss";
 
 export const ProductDetail: React.FC<{}> = () => {
   const { ["id"]: productId } = useParams() as any;
   const [product, setProduct] = useState<Product>({});
+  const history = useHistory();
+
+  const productsContext = useContext(ProductsContext);
 
   useEffect(() => {
-    setProduct(PRODUCTS.filter((product) => product.id == productId)[0]);
+    getProductsById(productId)
+      .then((res: any) => setProduct(res.data))
+      .catch((err: any) => console.error(err));
   }, [setProduct]);
+
+  const addItem = () => {
+    const append = productsContext.products;
+    append.push(product);
+    productsContext.setProducts(append);
+  };
 
   return (
     <Container>
@@ -48,10 +61,15 @@ export const ProductDetail: React.FC<{}> = () => {
             </Accordion.Item>
           </Accordion>
           <div className="add-cart">
-            <Button href="/products" variant="secondary">
+            <Button
+              onClick={() => history.push("/products")}
+              variant="secondary"
+            >
               Voltar
             </Button>
-            <Button variant="success">Adicionar ao carrinho</Button>
+            <Button variant="success" onClick={(e) => addItem()}>
+              Adicionar ao carrinho
+            </Button>
           </div>
         </Col>
       </Row>
